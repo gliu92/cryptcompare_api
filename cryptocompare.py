@@ -1,9 +1,14 @@
 import requests
 import pandas as pd
 import os
+import collections
 
 
 class CryptoCompare:
+    """
+    API doc: https://min-api.cryptocompare.com/
+    """
+
     URL = 'https://min-api.cryptocompare.com/'
     TIMEZONE = 'US/Central'
 
@@ -18,8 +23,18 @@ class CryptoCompare:
             if data:
                 frame = pd.DataFrame(data)
                 frame['time'] = frame['time'].map(lambda x: pd.Timestamp(x, unit='s', tz=self.TIMEZONE))
+                frame.set_index('time', inplace=True)
                 return frame
             else:
-                raise Exception('No Data found in response, instead received: {}'.format(r.json()))
+                print('No Data found in response, instead received: {}'.format(r.json()))
         else:
-            raise Exception('Received error with status code {} when requesting for data'.format(r.status_code))
+            print('Received error with status code {} when requesting for data'.format(r.status_code))
+
+    def coins_by_exchange(self, exchange):
+        url = os.path.join(self.URL, 'data', 'all', 'exchanges')
+        coins = requests.get(url).json().get(exchange)
+        coins_by_base = collections.defaultdict(dict)
+        for fsym, tsyms in coins.items():
+            for tsym in tsyms:
+                coins_by_base[tsym][fsym] = fsym + '/' + tsym
+        return coins_by_base
