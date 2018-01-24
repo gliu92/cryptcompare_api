@@ -30,6 +30,8 @@ class CryptoCompare:
         else:
             print('Received error with status code {} when requesting for data'.format(r.status_code))
 
+        return None
+
     def coins_by_exchange(self, exchange):
         url = os.path.join(self.URL, 'data', 'all', 'exchanges')
         coins = requests.get(url).json().get(exchange)
