@@ -2,6 +2,9 @@ import requests
 import pandas as pd
 import os
 import collections
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class CryptoCompare:
@@ -26,9 +29,9 @@ class CryptoCompare:
                 frame.set_index('time', inplace=True)
                 return frame
             else:
-                print('No Data found in response, instead received: {}'.format(r.json()))
+                logger.warning('Failed to download data for {}:{}, instead received: {}'.format(exchange, symbol, r.json()))
         else:
-            print('Received error with status code {} when requesting for data'.format(r.status_code))
+            logger.warning('Failed to download data for {}:{}. Received error with status code {} when requesting for data'.format(exchange, symbol, r.status_code))
 
         return None
 
@@ -40,3 +43,18 @@ class CryptoCompare:
             for tsym in tsyms:
                 coins_by_base[tsym][fsym] = fsym + '/' + tsym
         return coins_by_base
+
+    def get_exchange_list(self, fsym, tsym, limit=50):
+        url = os.path.join(self.URL, 'data', 'top', 'exchanges')
+        parameters = {'fsym': fsym, 'tsym': tsym, 'limit': limit}
+        r = requests.get(url, params=parameters)
+        if r.status_code == 200:
+            data = r.json().get('Data')
+            if data:
+                frame = pd.DataFrame(data)
+                return frame
+            else:
+                logger.warning('No data found')
+        else:
+            logger.warning('Encountered error while requesting data')
+
