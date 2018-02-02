@@ -28,15 +28,19 @@ for exchange in EXCHANGES:
             fpath = os.path.join(DATA_DIR, '{}_{}.csv'.format(exchange.lower(), sym.lower().replace('/', '')))
             if prices is not None:
                 if os.path.exists(fpath):
-                    data = pd.read_csv(fpath, index_col=0)
-                    if len(data):
-                        prev_timestamp = data.index[-1]
-                        prices_subframe = prices.loc[prev_timestamp:].iloc[1:]
-                        if len(prices_subframe):
-                            logger.info('Processing {}:{} {} {}'.format(exchange, sym, prev_timestamp, prices_subframe.index[0]))
-                            df = pd.concat([data, prices_subframe])
-                            df.to_csv(fpath)
-                    else:
+                    try:
+                        data = pd.read_csv(fpath, index_col=0)
+                        if len(data):
+                            prev_timestamp = data.index[-1]
+                            prices_subframe = prices.loc[prev_timestamp:].iloc[1:]
+                            if len(prices_subframe):
+                                logger.info('Processing {}:{} {} {}'.format(exchange, sym, prev_timestamp, prices_subframe.index[0]))
+                                df = pd.concat([data, prices_subframe])
+                                df.to_csv(fpath)
+                        else:
+                            prices.to_csv(fpath)
+                    except:
+                        logger.warning('Existing file for {}:{} is corrupted, overriding csv.'.format(exchange, sym))
                         prices.to_csv(fpath)
 
                 else:
